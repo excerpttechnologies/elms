@@ -1,6 +1,5 @@
 
 
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -50,8 +49,10 @@ export default function AssignmentsManager() {
   const [limit, setLimit] = useState<number>(10);
   const [total, setTotal] = useState<number>(0);
 
-  // create form state
-  const [showCreate, setShowCreate] = useState<boolean>(false);
+  // Modal states (changed from showCreate)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  
   const [creating, setCreating] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false); // unified saving state for create/update
   const [createError, setCreateError] = useState<string | null>(null);
@@ -77,14 +78,13 @@ export default function AssignmentsManager() {
   const [publishError, setPublishError] = useState<Record<string, string | null>>({});
   const [publishSuccess, setPublishSuccess] = useState<Record<string, string | null>>({});
 
-  // ----- NEW: edit/delete state -----
+  // edit/delete state
   const [editingAssignmentId, setEditingAssignmentId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  // ----------------------------------
 
   // Helper to build query string
   function buildListUrl() {
@@ -173,7 +173,7 @@ export default function AssignmentsManager() {
     }
   }
 
-  // ---------- Create form helpers (same as before) ----------
+  // ---------- Create form helpers ----------
   function updateForm<K extends keyof typeof form>(key: K, value: typeof form[K]) {
     setForm((p) => ({ ...p, [key]: value }));
   }
@@ -264,6 +264,38 @@ export default function AssignmentsManager() {
     return null;
   }
 
+  // Close all modals helper
+  const closeAllModals = () => {
+    setIsCreateModalOpen(false);
+    setIsEditModalOpen(false);
+    setEditing(false);
+    setEditingAssignmentId(null);
+    setCreateError(null);
+    setEditError(null);
+    setCreateSuccess(null);
+  };
+
+  // Reset form to initial state
+  const resetForm = () => {
+    setForm({
+      courseId: "",
+      title: "",
+      description: "",
+      type: "QUIZ",
+      totalPoints: 100,
+      passingScore: 60,
+      dueDate: "",
+      allowLateSubmission: false,
+      latePenalty: 0,
+      maxAttempts: 1,
+      timeLimit: 0,
+    });
+    setQuestions([]);
+    setCreateError(null);
+    setEditError(null);
+    setCreateSuccess(null);
+  };
+
   async function handleCreateAssignment(e?: React.FormEvent) {
     if (e) e.preventDefault();
     setCreateError(null);
@@ -317,23 +349,12 @@ export default function AssignmentsManager() {
       }
 
       setCreateSuccess("Assignment created successfully");
-      setForm({
-        courseId: "",
-        title: "",
-        description: "",
-        type: "QUIZ",
-        totalPoints: 100,
-        passingScore: 60,
-        dueDate: "",
-        allowLateSubmission: false,
-        latePenalty: 0,
-        maxAttempts: 1,
-        timeLimit: 0,
-      });
-      setQuestions([]);
+      resetForm();
       fetchAssignments();
-      setTimeout(() => setCreateSuccess(null), 3000);
-      setShowCreate(false);
+      setTimeout(() => {
+        setCreateSuccess(null);
+        setIsCreateModalOpen(false);
+      }, 2000);
     } catch (err: any) {
       console.error("handleCreateAssignment error", err);
       setCreateError(err?.message ?? "Failed to create assignment");
@@ -343,7 +364,7 @@ export default function AssignmentsManager() {
     }
   }
 
-  // ---------- Publish flow (NEW) ----------
+  // ---------- Publish flow ----------
   async function publishAssignment(assignmentId: string) {
     if (!confirm("Publish this assignment? Once published it will be visible to students.")) return;
 
@@ -389,7 +410,7 @@ export default function AssignmentsManager() {
     }
   }
 
-  // ---------- NEW: Fetch single assignment details (for editing) ----------
+  // ---------- Fetch single assignment details (for editing) ----------
   async function fetchAssignmentById(id: string) {
     setEditError(null);
     setSelectedAssignment(null);
@@ -409,11 +430,10 @@ export default function AssignmentsManager() {
     }
   }
 
-  // ---------- NEW: open edit modal and prefill form ---------
+  // ---------- open edit modal and prefill form ---------
   async function openEdit(assignmentId: string) {
     setEditingAssignmentId(assignmentId);
     setEditing(true);
-    setShowCreate(true); // ensure the form panel opens for edit
     const data = await fetchAssignmentById(assignmentId);
     if (!data) return;
 
@@ -442,9 +462,12 @@ export default function AssignmentsManager() {
       points: q.points ?? 0,
       order: q.order ?? 0,
     })));
+
+    // Open edit modal
+    setIsEditModalOpen(true);
   }
 
-  // ---------- NEW: Update assignment via PUT /api/assignments/:id ----------
+  // ---------- Update assignment via PUT /api/assignments/:id ----------
   async function handleUpdateAssignment(e?: React.FormEvent) {
     if (e) e.preventDefault();
     if (!editingAssignmentId) return;
@@ -503,7 +526,10 @@ export default function AssignmentsManager() {
       setEditingAssignmentId(null);
       setSelectedAssignment(null);
       setCreateSuccess("Assignment updated");
-      setTimeout(() => setCreateSuccess(null), 3000);
+      setTimeout(() => {
+        setCreateSuccess(null);
+        setIsEditModalOpen(false);
+      }, 2000);
     } catch (err: any) {
       console.error("handleUpdateAssignment error", err);
       setEditError(err?.message ?? "Failed to update assignment");
@@ -513,7 +539,7 @@ export default function AssignmentsManager() {
     }
   }
 
-  // ---------- NEW: Delete assignment via DELETE /api/assignments/:id ----------
+  // ---------- Delete assignment via DELETE /api/assignments/:id ----------
   async function handleDeleteAssignment(id: string) {
     if (!confirm("the assignment that has submissions count, you cant delete")) return;
     setDeletingId(id);
@@ -548,247 +574,1044 @@ export default function AssignmentsManager() {
   const totalPages = Math.max(1, Math.ceil(total / limit || 1));
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Assignments</h2>
+    <div className="card p-6">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Assignments</h2>
+        </div>
+        
         <div className="flex items-center gap-3">
           <button
-            className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            onClick={() => setShowCreate((s) => !s)}
+            className="btn btn-primary waves waves-primary"
+            onClick={() => {
+              resetForm();
+              setIsCreateModalOpen(true);
+            }}
           >
-            {showCreate ? "Close" : "Create Assignment"}
+            <span className="icon-[tabler--plus] size-5 mr-2"></span>
+            Create Assignment
           </button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-3">
-        <select value={filterCourseId} onChange={(e) => { setFilterCourseId(e.target.value); setPage(1); }} className="border rounded px-3 py-2">
-          <option value="">All courses</option>
-          {courses.map((c) => <option key={c._id} value={c._id}>{c.title}</option>)}
-        </select>
+      {/* Filters Card */}
+      <div className=" mb-5">
+   
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Course</label>
+            <select 
+              value={filterCourseId} 
+              onChange={(e) => { setFilterCourseId(e.target.value); setPage(1); }} 
+              className="select w-full"
+            >
+              <option value="">All courses</option>
+              {courses.map((c) => <option key={c._id} value={c._id}>{c.title}</option>)}
+            </select>
+          </div>
 
-        <select value={filterType} onChange={(e) => { setFilterType(e.target.value); setPage(1); }} className="border rounded px-3 py-2">
-          <option value="">All types</option>
-          <option value="QUIZ">QUIZ</option>
-          <option value="ESSAY">ESSAY</option>
-          <option value="PROJECT">PROJECT</option>
-          <option value="CODING">CODING</option>
-          <option value="FILE_UPLOAD">FILE_UPLOAD</option>
-        </select>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Type</label>
+            <select 
+              value={filterType} 
+              onChange={(e) => { setFilterType(e.target.value); setPage(1); }} 
+              className="select w-full"
+            >
+              <option value="">All types</option>
+              <option value="QUIZ">QUIZ</option>
+              <option value="ESSAY">ESSAY</option>
+              <option value="PROJECT">PROJECT</option>
+              <option value="CODING">CODING</option>
+              <option value="FILE_UPLOAD">FILE_UPLOAD</option>
+            </select>
+          </div>
 
-        <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }} className="border rounded px-3 py-2">
-          <option value="">Any status</option>
-          <option value="DRAFT">DRAFT</option>
-          <option value="PUBLISHED">PUBLISHED</option>
-          <option value="ARCHIVED">ARCHIVED</option>
-        </select>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
+            <select 
+              value={filterStatus} 
+              onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }} 
+              className="select w-full"
+            >
+              <option value="">Any status</option>
+              <option value="DRAFT">DRAFT</option>
+              <option value="PUBLISHED">PUBLISHED</option>
+              <option value="ARCHIVED">ARCHIVED</option>
+            </select>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <input type="number" min={1} value={limit} onChange={(e) => { setLimit(Number(e.target.value || 10)); setPage(1); }} className="w-24 border rounded px-3 py-2" />
-          <button onClick={() => { setPage(1); fetchAssignments(); }} className="px-3 py-2 border rounded">Apply</button>
+          <div className="flex flex-col justify-end">
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Items per page</label>
+                <input 
+                  type="number" 
+                  min={1} 
+                  value={limit} 
+                  onChange={(e) => { setLimit(Number(e.target.value || 10)); setPage(1); }} 
+                  className="input w-full"
+                />
+              </div>
+              <button 
+                onClick={() => { setPage(1); fetchAssignments(); }} 
+                className="btn btn-soft btn-primary"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Create / Edit form */}
-      {(showCreate || editing) && (
-        <div className="mb-6 border rounded p-4 bg-gray-50">
-          <h3 className="font-medium mb-3">{editing ? "Edit Assignment" : "New Assignment"}</h3>
+      {/* Assignments List */}
 
-          {(createError || editError) && <div className="mb-3 p-2 bg-red-50 text-red-700 border rounded">{createError || editError}</div>}
-          {createSuccess && <div className="mb-3 p-2 bg-green-50 text-green-700 border rounded">{createSuccess}</div>}
-
-          <form onSubmit={editing ? handleUpdateAssignment : handleCreateAssignment} className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <select required value={form.courseId} onChange={(e) => updateForm("courseId", e.target.value)} className="border rounded px-3 py-2">
-                <option value="">Select course</option>
-                {courses.map((c) => <option key={c._id} value={c._id}>{c.title}</option>)}
-              </select>
-
-              <input required value={form.title} onChange={(e) => updateForm("title", e.target.value)} placeholder="Assignment title" className="border rounded px-3 py-2" />
-              <select value={form.type} onChange={(e) => updateForm("type", e.target.value)} className="border rounded px-3 py-2">
-                <option value="QUIZ">QUIZ</option>
-                <option value="ESSAY">ESSAY</option>
-                <option value="PROJECT">PROJECT</option>
-                <option value="CODING">CODING</option>
-                <option value="FILE_UPLOAD">FILE_UPLOAD</option>
-              </select>
+        {loadingList ? (
+          <div className="card-body">
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+              <p className="text-gray-500">Loading assignments...</p>
             </div>
-
-            <div>
-              <textarea required value={form.description} onChange={(e) => updateForm("description", e.target.value)} rows={3} placeholder="Brief description / instructions" className="w-full border rounded px-3 py-2" />
+          </div>
+        ) : listError ? (
+          <div className="card-body">
+            <div className="alert alert-error">
+              <span className="icon-[tabler--alert-circle] size-5"></span>
+              {listError}
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <input type="number" min={0} value={form.totalPoints} onChange={(e) => updateForm("totalPoints", Number(e.target.value || 0))} className="border rounded px-3 py-2" placeholder="Total points" />
-              <input type="number" min={0} max={100} value={form.passingScore} onChange={(e) => updateForm("passingScore", Number(e.target.value || 0))} className="border rounded px-3 py-2" placeholder="Passing (%)" />
-              <input type="datetime-local" value={form.dueDate} onChange={(e) => updateForm("dueDate", e.target.value)} className="border rounded px-3 py-2" />
-              <input type="number" min={0} value={form.timeLimit} onChange={(e) => updateForm("timeLimit", Number(e.target.value || 0))} className="border rounded px-3 py-2" placeholder="Time limit (seconds)" />
+          </div>
+        ) : assignments.length === 0 ? (
+          <div className="card-body">
+            <div className="text-center py-12">
+              <span className="icon-[tabler--file-off] size-16 text-gray-300 mb-4 block mx-auto"></span>
+              <h4 className="text-lg font-medium text-gray-700 mb-2">No assignments found</h4>
+              <p className="text-gray-500 mb-6">Try adjusting your filters or create a new assignment</p>
+              <button
+                onClick={() => {
+                  resetForm();
+                  setIsCreateModalOpen(true);
+                }}
+                className="btn btn-primary"
+              >
+                <span className="icon-[tabler--plus] size-5 mr-2"></span>
+                Create First Assignment
+              </button>
             </div>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto border-base-content/25 rounded-lg border">
+              <table className="table">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="font-medium text-gray-700">Title & Description</th>
+                    <th className="font-medium text-gray-700">Course</th>
+                    <th className="font-medium text-gray-700">Type</th>
+                    <th className="font-medium text-gray-700">Points</th>
+                    <th className="font-medium text-gray-700">Due Date</th>
+                    <th className="font-medium text-gray-700">Status</th>
+                    <th className="font-medium text-gray-700">Author</th>
+                    <th className="font-medium text-gray-700 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assignments.map((a) => (
+                    <tr key={a._id} className="hover:bg-gray-50 transition-colors">
+                      <td>
+                        <div className="font-medium text-gray-800">{a.title}</div>
+                        <div className="text-sm text-gray-500 line-clamp-2 mt-1">{a.description}</div>
+                      </td>
+                      
+                      <td>
+                        <span className="text-sm text-gray-700">{typeof a.courseId === "string" ? a.courseId : a.courseId?.title ?? "-"}</span>
+                      </td>
+                      
+                      <td>
+                        <span className={`badge badge-soft ${a.type === 'QUIZ' ? 'badge-primary' : a.type === 'ESSAY' ? 'badge-success' : a.type === 'PROJECT' ? 'badge-warning' : 'badge-info'} text-xs`}>
+                          {a.type}
+                        </span>
+                      </td>
+                      
+                      <td>
+                        <div className="text-sm font-medium text-gray-800">{a.totalPoints ?? "-"}</div>
+                        {a.passingScore && (
+                          <div className="text-xs text-gray-500">Pass: {a.passingScore}%</div>
+                        )}
+                      </td>
+                      
+                      <td>
+                        {a.dueDate ? (
+                          <>
+                            <div className="text-sm text-gray-700">{new Date(a.dueDate).toLocaleDateString()}</div>
+                            <div className="text-xs text-gray-500">{new Date(a.dueDate).toLocaleTimeString()}</div>
+                          </>
+                        ) : (
+                          <span className="text-sm text-gray-400">No due date</span>
+                        )}
+                      </td>
+                      
+                      <td>
+                        <span className={`badge ${a.status === 'PUBLISHED' ? 'badge-success' : a.status === 'DRAFT' ? 'badge-warning' : 'badge-error'} text-xs`}>
+                          {a.status ?? "N/A"}
+                        </span>
+                      </td>
+                      
+                      <td>
+                        {a.createdBy ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                              <span className="text-xs font-medium text-primary">
+                                {(a.createdBy.firstName?.[0] || '') + (a.createdBy.lastName?.[0] || '')}
+                              </span>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-800">{a.createdBy.firstName ?? ""} {a.createdBy.lastName ?? ""}</div>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">-</span>
+                        )}
+                      </td>
+                      
+                      <td>
+                        <div className="flex items-center justify-end gap-2">
+                          {/* Edit Button */}
+                          <button
+                            onClick={() => openEdit(a._id)}
+                            className="btn btn-circle btn-text btn-sm hover:bg-blue-50 hover:text-blue-600"
+                            aria-label="Edit assignment"
+                          >
+                            <span className="icon-[tabler--pencil] size-4"></span>
+                          </button>
 
-            <div className="flex items-center gap-3">
-              <label className="inline-flex items-center gap-2">
-                <input type="checkbox" checked={form.allowLateSubmission} onChange={(e) => updateForm("allowLateSubmission", e.target.checked)} />
-                <span className="text-sm">Allow late submission</span>
-              </label>
+                          {/* Publish Button */}
+                          {a.status !== "PUBLISHED" ? (
+                            <button
+                              onClick={() => publishAssignment(a._id)}
+                              disabled={publishing[a._id]}
+                              className="btn btn-circle btn-text btn-sm hover:bg-amber-50 hover:text-amber-600"
+                              aria-label="Publish assignment"
+                            >
+                              {publishing[a._id] ? (
+                                <span className="icon-[tabler--loader] size-4 animate-spin"></span>
+                              ) : (
+                                <span className="icon-[tabler--send] size-4"></span>
+                              )}
+                            </button>
+                          ) : (
+                            <span className="badge badge-success text-xs px-3 py-1">Published</span>
+                          )}
 
-              {form.allowLateSubmission && (
-                <input type="number" min={0} max={100} value={form.latePenalty} onChange={(e) => updateForm("latePenalty", Number(e.target.value || 0))} className="border rounded px-3 py-2 w-32" placeholder="Late penalty (%)" />
-              )}
+                          {/* Delete Button */}
+                          <button
+                            onClick={() => handleDeleteAssignment(a._id)}
+                            disabled={Boolean(deletingId === a._id)}
+                            className="btn btn-circle btn-text btn-sm hover:bg-red-50 hover:text-red-600"
+                            aria-label="Delete assignment"
+                          >
+                            {deletingId === a._id ? (
+                              <span className="icon-[tabler--loader] size-4 animate-spin"></span>
+                            ) : (
+                              <span className="icon-[tabler--trash] size-4"></span>
+                            )}
+                          </button>
 
-              <input type="number" min={1} value={form.maxAttempts} onChange={(e) => updateForm("maxAttempts", Number(e.target.value || 1))} className="border rounded px-3 py-2 w-32" placeholder="Max attempts" />
-            </div>
-
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium">Questions</h4>
-                <button type="button" onClick={addQuestion} className="px-2 py-1 border rounded text-sm">+ Add question</button>
-              </div>
-
-              {questions.length === 0 && <div className="text-sm text-gray-500">No questions added (optional).</div>}
-
-              <div className="space-y-3">
-                {questions.map((q, qi) => (
-                  <div key={q._localId ?? qi} className="p-3 border rounded bg-white">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <input value={q.question} onChange={(e) => updateQuestion(qi, { question: e.target.value })} placeholder={`Question ${qi + 1}`} className="w-full border rounded px-2 py-1 mb-2" />
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                          <select value={q.type} onChange={(e) => updateQuestion(qi, { type: e.target.value as any })} className="border rounded px-2 py-1">
-                            <option value="MULTIPLE_CHOICE">MULTIPLE_CHOICE</option>
-                            <option value="TRUE_FALSE">TRUE_FALSE</option>
-                            <option value="SHORT_ANSWER">SHORT_ANSWER</option>
-                            <option value="ESSAY">ESSAY</option>
-                          </select>
-
-                          <input type="number" min={0} value={q.points} onChange={(e) => updateQuestion(qi, { points: Number(e.target.value || 0) })} className="border rounded px-2 py-1" placeholder="Points" />
-
-                          <input type="number" min={0} value={q.order} onChange={(e) => updateQuestion(qi, { order: Number(e.target.value || 0) })} className="border rounded px-2 py-1" placeholder="Order" />
+                          {/* More Options Button */}
+                          <button className="btn btn-circle btn-text btn-sm hover:bg-gray-100">
+                            <span className="icon-[tabler--dots-vertical] size-4"></span>
+                          </button>
                         </div>
 
-                        {q.type === "MULTIPLE_CHOICE" && (
-                          <div className="mt-2 space-y-2">
-                            <div className="flex items-center gap-2">
-                              <div className="text-sm font-medium">Options</div>
-                              <button type="button" onClick={() => addOptionToQuestion(qi)} className="text-sm underline text-blue-600">Add option</button>
-                            </div>
-                            {(q.options ?? []).map((opt, oi) => (
-                              <div key={oi} className="flex items-center gap-2">
-                                <input value={opt} onChange={(e) => updateOption(qi, oi, e.target.value)} className="flex-1 border rounded px-2 py-1" />
-                                <button type="button" onClick={() => removeOption(qi, oi)} className="text-sm text-red-600">Remove</button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                        {/* Status Messages */}
+                        <div className="mt-2 text-right">
+                          {publishError[a._id] && (
+                            <div className="text-xs text-red-600">{publishError[a._id]}</div>
+                          )}
+                          {publishSuccess[a._id] && (
+                            <div className="text-xs text-green-600">{publishSuccess[a._id]}</div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-                      <div className="flex flex-col gap-2 ml-3">
-                        <button type="button" onClick={() => removeQuestion(qi)} className="text-sm text-red-600">Remove</button>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="card-footer">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
+                    Showing <span className="font-medium">{((page - 1) * limit) + 1}</span> - 
+                    <span className="font-medium"> {Math.min(page * limit, total)} </span>
+                    of <span className="font-medium">{total}</span> assignments
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      disabled={page <= 1} 
+                      onClick={() => setPage((p) => Math.max(1, p - 1))} 
+                      className="btn btn-soft btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span className="icon-[tabler--chevron-left] size-4"></span>
+                      Previous
+                    </button>
+                    
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (page <= 3) {
+                          pageNum = i + 1;
+                        } else if (page >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = page - 2 + i;
+                        }
+                        
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setPage(pageNum)}
+                            className={`btn btn-circle btn-sm ${page === pageNum ? 'btn-primary' : 'btn-text'}`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    
+                    <button 
+                      disabled={page >= totalPages} 
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))} 
+                      className="btn btn-soft btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                      <span className="icon-[tabler--chevron-right] size-4 ml-2"></span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      
+      {/* ================= MODAL FOR CREATE ASSIGNMENT ================= */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50" 
+            onClick={closeAllModals}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <h3 className="text-xl font-semibold text-gray-800">Create New Assignment</h3>
+                <button
+                  onClick={closeAllModals}
+                  className="btn btn-circle btn-text btn-sm"
+                >
+                  <span className="icon-[tabler--x] size-5"></span>
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Messages */}
+                {(createError || editError) && (
+                  <div className="alert alert-error mb-4">
+                    <span className="icon-[tabler--alert-circle] size-5"></span>
+                    {createError || editError}
+                  </div>
+                )}
+                
+                {createSuccess && (
+                  <div className="alert alert-success mb-4">
+                    <span className="icon-[tabler--check] size-5"></span>
+                    {createSuccess}
+                  </div>
+                )}
+
+                {/* Form */}
+                <form onSubmit={handleCreateAssignment} className="space-y-6">
+                  {/* Basic Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Course <span className="text-red-500">*</span></label>
+                      <select 
+                        required 
+                        value={form.courseId} 
+                        onChange={(e) => updateForm("courseId", e.target.value)} 
+                        className="select w-full"
+                      >
+                        <option value="">Select course</option>
+                        {courses.map((c) => <option key={c._id} value={c._id}>{c.title}</option>)}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Title <span className="text-red-500">*</span></label>
+                      <input 
+                        required 
+                        value={form.title} 
+                        onChange={(e) => updateForm("title", e.target.value)} 
+                        placeholder="Assignment title" 
+                        className="input w-full"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                      <select 
+                        value={form.type} 
+                        onChange={(e) => updateForm("type", e.target.value)} 
+                        className="select w-full"
+                      >
+                        <option value="QUIZ">QUIZ</option>
+                        <option value="ESSAY">ESSAY</option>
+                        <option value="PROJECT">PROJECT</option>
+                        <option value="CODING">CODING</option>
+                        <option value="FILE_UPLOAD">FILE_UPLOAD</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description <span className="text-red-500">*</span></label>
+                    <textarea 
+                      required 
+                      value={form.description} 
+                      onChange={(e) => updateForm("description", e.target.value)} 
+                      rows={3} 
+                      placeholder="Brief description / instructions" 
+                      className="textarea w-full"
+                    />
+                  </div>
+
+                  {/* Settings */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Total Points</label>
+                      <input 
+                        type="number" 
+                        min={0} 
+                        value={form.totalPoints} 
+                        onChange={(e) => updateForm("totalPoints", Number(e.target.value || 0))} 
+                        className="input w-full" 
+                        placeholder="e.g., 100"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Passing Score (%)</label>
+                      <input 
+                        type="number" 
+                        min={0} 
+                        max={100} 
+                        value={form.passingScore} 
+                        onChange={(e) => updateForm("passingScore", Number(e.target.value || 0))} 
+                        className="input w-full" 
+                        placeholder="e.g., 60"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Due Date</label>
+                      <input 
+                        type="datetime-local" 
+                        value={form.dueDate} 
+                        onChange={(e) => updateForm("dueDate", e.target.value)} 
+                        className="input w-full"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Time Limit (seconds)</label>
+                      <input 
+                        type="number" 
+                        min={0} 
+                        value={form.timeLimit} 
+                        onChange={(e) => updateForm("timeLimit", Number(e.target.value || 0))} 
+                        className="input w-full" 
+                        placeholder="e.g., 3600"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Advanced Settings */}
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Advanced Settings</h4>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={form.allowLateSubmission} 
+                          onChange={(e) => updateForm("allowLateSubmission", e.target.checked)} 
+                          className="checkbox"
+                        />
+                        <span className="text-sm text-gray-700">Allow late submission</span>
+                      </label>
+
+                      {form.allowLateSubmission && (
+                        <div className="w-32">
+                          <input 
+                            type="number" 
+                            min={0} 
+                            max={100} 
+                            value={form.latePenalty} 
+                            onChange={(e) => updateForm("latePenalty", Number(e.target.value || 0))} 
+                            className="input w-full" 
+                            placeholder="Late penalty %"
+                          />
+                        </div>
+                      )}
+
+                      <div className="w-32">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Max Attempts</label>
+                        <input 
+                          type="number" 
+                          min={1} 
+                          value={form.maxAttempts} 
+                          onChange={(e) => updateForm("maxAttempts", Number(e.target.value || 1))} 
+                          className="input w-full" 
+                          placeholder="e.g., 3"
+                        />
                       </div>
                     </div>
                   </div>
-                ))}
+
+                  {/* Questions Section */}
+                  <div className="border-t pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h4 className="text-lg font-semibold text-gray-800">Questions</h4>
+                        <p className="text-sm text-gray-500">Add questions to this assignment (optional)</p>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={addQuestion} 
+                        className="btn btn-soft btn-primary"
+                      >
+                        <span className="icon-[tabler--plus] size-4 mr-2"></span>
+                        Add Question
+                      </button>
+                    </div>
+
+                    {questions.length === 0 && (
+                      <div className="text-center p-6 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                        <span className="icon-[tabler--help] size-12 text-gray-400 mb-3 block mx-auto"></span>
+                        <p className="text-gray-500">No questions added yet</p>
+                        <p className="text-sm text-gray-400 mt-1">Add questions or save as standalone assignment</p>
+                      </div>
+                    )}
+
+                    {/* Questions List */}
+                    <div className="space-y-4">
+                      {questions.map((q, qi) => (
+                        <div key={q._localId ?? qi} className="card border border-gray-200">
+                          <div className="card-header bg-gray-50 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <span className="font-medium text-gray-700">Question {qi + 1}</span>
+                              <span className="badge badge-soft badge-primary text-xs">{q.type?.replace('_', ' ') || 'Multiple Choice'}</span>
+                            </div>
+                            <button 
+                              type="button" 
+                              onClick={() => removeQuestion(qi)} 
+                              className="btn btn-text btn-sm text-red-600 hover:text-red-700"
+                            >
+                              <span className="icon-[tabler--trash] size-4"></span>
+                            </button>
+                          </div>
+                          
+                          <div className="card-body">
+                            <div className="space-y-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
+                                <input 
+                                  value={q.question} 
+                                  onChange={(e) => updateQuestion(qi, { question: e.target.value })} 
+                                  placeholder={`Enter question ${qi + 1}`} 
+                                  className="input w-full"
+                                />
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                                  <select 
+                                    value={q.type} 
+                                    onChange={(e) => updateQuestion(qi, { type: e.target.value as any })} 
+                                    className="select w-full"
+                                  >
+                                    <option value="MULTIPLE_CHOICE">Multiple Choice</option>
+                                    <option value="TRUE_FALSE">True/False</option>
+                                    <option value="SHORT_ANSWER">Short Answer</option>
+                                    <option value="ESSAY">Essay</option>
+                                  </select>
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">Points</label>
+                                  <input 
+                                    type="number" 
+                                    min={0} 
+                                    value={q.points} 
+                                    onChange={(e) => updateQuestion(qi, { points: Number(e.target.value || 0) })} 
+                                    className="input w-full" 
+                                    placeholder="Points"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">Order</label>
+                                  <input 
+                                    type="number" 
+                                    min={0} 
+                                    value={q.order} 
+                                    onChange={(e) => updateQuestion(qi, { order: Number(e.target.value || 0) })} 
+                                    className="input w-full" 
+                                    placeholder="Order"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Multiple Choice Options */}
+                              {q.type === "MULTIPLE_CHOICE" && (
+                                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <h5 className="text-sm font-semibold text-blue-700">Multiple Choice Options</h5>
+                                    <button 
+                                      type="button" 
+                                      onClick={() => addOptionToQuestion(qi)} 
+                                      className="btn btn-text btn-sm text-blue-600"
+                                    >
+                                      <span className="icon-[tabler--plus] size-4 mr-1"></span>
+                                      Add Option
+                                    </button>
+                                  </div>
+                                  
+                                  {(q.options ?? []).map((opt, oi) => (
+                                    <div key={oi} className="flex items-center gap-3 mb-2">
+                                      <span className="text-xs text-gray-500 w-6">{oi + 1}.</span>
+                                      <input 
+                                        value={opt} 
+                                        onChange={(e) => updateOption(qi, oi, e.target.value)} 
+                                        className="input flex-1" 
+                                        placeholder={`Option ${oi + 1}`}
+                                      />
+                                      <button 
+                                        type="button" 
+                                        onClick={() => removeOption(qi, oi)} 
+                                        className="btn btn-text btn-sm text-red-600"
+                                      >
+                                        <span className="icon-[tabler--trash] size-4"></span>
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Form Actions */}
+                  <div className="flex items-center justify-end gap-3 pt-6 border-t">
+                    <button 
+                      type="button" 
+                      onClick={closeAllModals} 
+                      className="btn btn-text"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      disabled={saving} 
+                      className="btn btn-primary min-w-[140px]"
+                    >
+                      {saving ? (
+                        <>
+                          <span className="icon-[tabler--loader] size-5 animate-spin mr-2"></span>
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <span className="icon-[tabler--check] size-5 mr-2"></span>
+                          Create Assignment
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
-
-            <div className="flex items-center gap-3 pt-3">
-              <button type="submit" disabled={saving} className="px-4 py-2 bg-green-600 text-white rounded">{saving ? (editing ? "Updating..." : "Creating...") : (editing ? "Update" : "Create")}</button>
-              <button type="button" onClick={() => { setShowCreate(false); setEditing(false); setEditingAssignmentId(null); setCreateError(null); setCreateSuccess(null); setEditError(null); }} className="px-4 py-2 border rounded">Cancel</button>
-            </div>
-          </form>
+          </div>
         </div>
       )}
 
-      {/* Assignments list */}
-      <div className="border rounded p-3 bg-white">
-        {loadingList ? (
-          <div className="text-center py-8">Loading assignments...</div>
-        ) : listError ? (
-          <div className="text-red-600 py-4">{listError}</div>
-        ) : assignments.length === 0 ? (
-          <div className="text-sm text-gray-500 py-4">No assignments found.</div>
-        ) : (
-          <>
-            <table className="w-full table-auto border-collapse">
-              <thead>
-                <tr className="text-left text-sm text-gray-600">
-                  <th className="p-2">Title</th>
-                  <th className="p-2">Course</th>
-                  <th className="p-2">Type</th>
-                  <th className="p-2">Points</th>
-                  <th className="p-2">Due</th>
-                  <th className="p-2">Status</th>
-                  <th className="p-2">Author</th>
-                  <th className="p-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assignments.map((a) => (
-                  <tr key={a._id} className="border-t">
-                    <td className="p-2 align-top">
-                      <div className="font-medium">{a.title}</div>
-                      <div className="text-xs text-gray-500">{a.description}</div>
-                    </td>
-                    <td className="p-2 align-top">{typeof a.courseId === "string" ? a.courseId : a.courseId?.title ?? "-"}</td>
-                    <td className="p-2 align-top">{a.type}</td>
-                    <td className="p-2 align-top">{a.totalPoints ?? "-"}</td>
-                    <td className="p-2 align-top">{a.dueDate ? new Date(a.dueDate).toLocaleString() : "-"}</td>
-                    <td className="p-2 align-top">{a.status ?? "N/A"}</td>
-                    <td className="p-2 align-top">{a.createdBy ? `${a.createdBy.firstName ?? ""} ${a.createdBy.lastName ?? ""}` : "-"}</td>
+      {/* ================= MODAL FOR EDIT ASSIGNMENT ================= */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50" 
+            onClick={closeAllModals}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <h3 className="text-xl font-semibold text-gray-800">Edit Assignment</h3>
+                <button
+                  onClick={closeAllModals}
+                  className="btn btn-circle btn-text btn-sm"
+                >
+                  <span className="icon-[tabler--x] size-5"></span>
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Messages */}
+                {(createError || editError) && (
+                  <div className="alert alert-error mb-4">
+                    <span className="icon-[tabler--alert-circle] size-5"></span>
+                    {createError || editError}
+                  </div>
+                )}
+                
+                {createSuccess && (
+                  <div className="alert alert-success mb-4">
+                    <span className="icon-[tabler--check] size-5"></span>
+                    {createSuccess}
+                  </div>
+                )}
 
-                    <td className="p-2 align-top">
-                      <div className="flex items-center gap-2">
-                        {/* Edit button */}
-                        <button
-                          onClick={() => openEdit(a._id)}
-                          className="px-2 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-700"
-                        >
-                          Edit
-                        </button>
+                {/* Form */}
+                <form onSubmit={handleUpdateAssignment} className="space-y-6">
+                  {/* Basic Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Course <span className="text-red-500">*</span></label>
+                      <select 
+                        required 
+                        value={form.courseId} 
+                        onChange={(e) => updateForm("courseId", e.target.value)} 
+                        className="select w-full"
+                      >
+                        <option value="">Select course</option>
+                        {courses.map((c) => <option key={c._id} value={c._id}>{c.title}</option>)}
+                      </select>
+                    </div>
 
-                        {/* Delete button */}
-                        <button
-                          onClick={() => handleDeleteAssignment(a._id)}
-                          disabled={Boolean(deletingId === a._id)}
-                          className="px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 disabled:opacity-50"
-                        >
-                          {deletingId === a._id ? "Deleting..." : "Delete"}
-                        </button>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Title <span className="text-red-500">*</span></label>
+                      <input 
+                        required 
+                        value={form.title} 
+                        onChange={(e) => updateForm("title", e.target.value)} 
+                        placeholder="Assignment title" 
+                        className="input w-full"
+                      />
+                    </div>
 
-                        {/* Publish button: only show if not published */}
-                        {a.status !== "PUBLISHED" ? (
-                          <button
-                            onClick={() => publishAssignment(a._id)}
-                            disabled={publishing[a._id]}
-                            className="px-2 py-1 bg-yellow-600 text-white rounded text-xs hover:bg-yellow-700 disabled:opacity-50"
-                          >
-                            {publishing[a._id] ? "Publishing..." : "Publish"}
-                          </button>
-                        ) : (
-                          <span className="px-2 py-1 text-xs rounded bg-green-50 text-green-700">Published</span>
-                        )}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                      <select 
+                        value={form.type} 
+                        onChange={(e) => updateForm("type", e.target.value)} 
+                        className="select w-full"
+                      >
+                        <option value="QUIZ">QUIZ</option>
+                        <option value="ESSAY">ESSAY</option>
+                        <option value="PROJECT">PROJECT</option>
+                        <option value="CODING">CODING</option>
+                        <option value="FILE_UPLOAD">FILE_UPLOAD</option>
+                      </select>
+                    </div>
+                  </div>
 
-                        {/* inline publish feedback */}
-                        {publishError[a._id] && <div className="text-xs text-red-600">{publishError[a._id]}</div>}
-                        {publishSuccess[a._id] && <div className="text-xs text-green-600">{publishSuccess[a._id]}</div>}
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description <span className="text-red-500">*</span></label>
+                    <textarea 
+                      required 
+                      value={form.description} 
+                      onChange={(e) => updateForm("description", e.target.value)} 
+                      rows={3} 
+                      placeholder="Brief description / instructions" 
+                      className="textarea w-full"
+                    />
+                  </div>
+
+                  {/* Settings */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Total Points</label>
+                      <input 
+                        type="number" 
+                        min={0} 
+                        value={form.totalPoints} 
+                        onChange={(e) => updateForm("totalPoints", Number(e.target.value || 0))} 
+                        className="input w-full" 
+                        placeholder="e.g., 100"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Passing Score (%)</label>
+                      <input 
+                        type="number" 
+                        min={0} 
+                        max={100} 
+                        value={form.passingScore} 
+                        onChange={(e) => updateForm("passingScore", Number(e.target.value || 0))} 
+                        className="input w-full" 
+                        placeholder="e.g., 60"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Due Date</label>
+                      <input 
+                        type="datetime-local" 
+                        value={form.dueDate} 
+                        onChange={(e) => updateForm("dueDate", e.target.value)} 
+                        className="input w-full"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Time Limit (seconds)</label>
+                      <input 
+                        type="number" 
+                        min={0} 
+                        value={form.timeLimit} 
+                        onChange={(e) => updateForm("timeLimit", Number(e.target.value || 0))} 
+                        className="input w-full" 
+                        placeholder="e.g., 3600"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Advanced Settings */}
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Advanced Settings</h4>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={form.allowLateSubmission} 
+                          onChange={(e) => updateForm("allowLateSubmission", e.target.checked)} 
+                          className="checkbox"
+                        />
+                        <span className="text-sm text-gray-700">Allow late submission</span>
+                      </label>
+
+                      {form.allowLateSubmission && (
+                        <div className="w-32">
+                          <input 
+                            type="number" 
+                            min={0} 
+                            max={100} 
+                            value={form.latePenalty} 
+                            onChange={(e) => updateForm("latePenalty", Number(e.target.value || 0))} 
+                            className="input w-full" 
+                            placeholder="Late penalty %"
+                          />
+                        </div>
+                      )}
+
+                      <div className="w-32">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Max Attempts</label>
+                        <input 
+                          type="number" 
+                          min={1} 
+                          value={form.maxAttempts} 
+                          onChange={(e) => updateForm("maxAttempts", Number(e.target.value || 1))} 
+                          className="input w-full" 
+                          placeholder="e.g., 3"
+                        />
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
 
-            {/* Pagination */}
-            <div className="mt-3 flex items-center justify-between">
-              <div className="text-sm text-gray-600">Page {page} / {totalPages} — {total} total</div>
-              <div className="flex items-center gap-2">
-                <button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="px-2 py-1 border rounded disabled:opacity-50">Prev</button>
-                <button disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="px-2 py-1 border rounded disabled:opacity-50">Next</button>
+                  {/* Questions Section */}
+                  <div className="border-t pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h4 className="text-lg font-semibold text-gray-800">Questions</h4>
+                        <p className="text-sm text-gray-500">Add questions to this assignment (optional)</p>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={addQuestion} 
+                        className="btn btn-soft btn-primary"
+                      >
+                        <span className="icon-[tabler--plus] size-4 mr-2"></span>
+                        Add Question
+                      </button>
+                    </div>
+
+                    {questions.length === 0 && (
+                      <div className="text-center p-6 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                        <span className="icon-[tabler--help] size-12 text-gray-400 mb-3 block mx-auto"></span>
+                        <p className="text-gray-500">No questions added yet</p>
+                        <p className="text-sm text-gray-400 mt-1">Add questions or save as standalone assignment</p>
+                      </div>
+                    )}
+
+                    {/* Questions List */}
+                    <div className="space-y-4">
+                      {questions.map((q, qi) => (
+                        <div key={q._localId ?? qi} className="card border border-gray-200">
+                          <div className="card-header bg-gray-50 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <span className="font-medium text-gray-700">Question {qi + 1}</span>
+                              <span className="badge badge-soft badge-primary text-xs">{q.type?.replace('_', ' ') || 'Multiple Choice'}</span>
+                            </div>
+                            <button 
+                              type="button" 
+                              onClick={() => removeQuestion(qi)} 
+                              className="btn btn-text btn-sm text-red-600 hover:text-red-700"
+                            >
+                              <span className="icon-[tabler--trash] size-4"></span>
+                            </button>
+                          </div>
+                          
+                          <div className="card-body">
+                            <div className="space-y-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
+                                <input 
+                                  value={q.question} 
+                                  onChange={(e) => updateQuestion(qi, { question: e.target.value })} 
+                                  placeholder={`Enter question ${qi + 1}`} 
+                                  className="input w-full"
+                                />
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                                  <select 
+                                    value={q.type} 
+                                    onChange={(e) => updateQuestion(qi, { type: e.target.value as any })} 
+                                    className="select w-full"
+                                  >
+                                    <option value="MULTIPLE_CHOICE">Multiple Choice</option>
+                                    <option value="TRUE_FALSE">True/False</option>
+                                    <option value="SHORT_ANSWER">Short Answer</option>
+                                    <option value="ESSAY">Essay</option>
+                                  </select>
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">Points</label>
+                                  <input 
+                                    type="number" 
+                                    min={0} 
+                                    value={q.points} 
+                                    onChange={(e) => updateQuestion(qi, { points: Number(e.target.value || 0) })} 
+                                    className="input w-full" 
+                                    placeholder="Points"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">Order</label>
+                                  <input 
+                                    type="number" 
+                                    min={0} 
+                                    value={q.order} 
+                                    onChange={(e) => updateQuestion(qi, { order: Number(e.target.value || 0) })} 
+                                    className="input w-full" 
+                                    placeholder="Order"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Multiple Choice Options */}
+                              {q.type === "MULTIPLE_CHOICE" && (
+                                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <h5 className="text-sm font-semibold text-blue-700">Multiple Choice Options</h5>
+                                    <button 
+                                      type="button" 
+                                      onClick={() => addOptionToQuestion(qi)} 
+                                      className="btn btn-text btn-sm text-blue-600"
+                                    >
+                                      <span className="icon-[tabler--plus] size-4 mr-1"></span>
+                                      Add Option
+                                    </button>
+                                  </div>
+                                  
+                                  {(q.options ?? []).map((opt, oi) => (
+                                    <div key={oi} className="flex items-center gap-3 mb-2">
+                                      <span className="text-xs text-gray-500 w-6">{oi + 1}.</span>
+                                      <input 
+                                        value={opt} 
+                                        onChange={(e) => updateOption(qi, oi, e.target.value)} 
+                                        className="input flex-1" 
+                                        placeholder={`Option ${oi + 1}`}
+                                      />
+                                      <button 
+                                        type="button" 
+                                        onClick={() => removeOption(qi, oi)} 
+                                        className="btn btn-text btn-sm text-red-600"
+                                      >
+                                        <span className="icon-[tabler--trash] size-4"></span>
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Form Actions */}
+                  <div className="flex items-center justify-end gap-3 pt-6 border-t">
+                    <button 
+                      type="button" 
+                      onClick={closeAllModals} 
+                      className="btn btn-text"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      disabled={saving} 
+                      className="btn btn-primary min-w-[140px]"
+                    >
+                      {saving ? (
+                        <>
+                          <span className="icon-[tabler--loader] size-5 animate-spin mr-2"></span>
+                          Updating...
+                        </>
+                      ) : (
+                        <>
+                          <span className="icon-[tabler--check] size-5 mr-2"></span>
+                          Update Assignment
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

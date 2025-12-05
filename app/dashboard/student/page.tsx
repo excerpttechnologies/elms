@@ -1,314 +1,232 @@
 export default function StudentIndex() {
   return (
     <>
-      <div className="rounded-box bg-base-100 w-full flex  gap-4  max-xl:flex-col">
-        <div className="flex flex-1 gap-4 max-sm:flex-col">
-          <div className="flex flex-1 flex-col gap-4">
-            <div className="text-base-content flex items-center gap-2">
-              <div className="avatar avatar-placeholder">
-                <div className="bg-base-200 rounded-field size-9">
-                  <span className="icon-[tabler--eye] size-6"></span>
+      <div className="p-4 md:p-6">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-base-content">Performance Dashboard</h1>
+          <p className="text-base-content/60 mt-2">Overview of your teaching metrics and engagement</p>
+        </div>
+
+        {/* Date Range Selector */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="icon-[tabler--calendar] size-5 text-base-content/70"></span>
+              <span className="text-base-content font-medium">Last 30 Days</span>
+            </div>
+            <button className="btn btn-sm btn-outline">
+              <span className="icon-[tabler--calendar] size-4"></span>
+              Select Date Range
+            </button>
+          </div>
+        </div>
+
+        {/* Main Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Pageviews Card */}
+          <div className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <div className="card-body p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                  <span className="icon-[tabler--eye] size-6 text-blue-600 dark:text-blue-400"></span>
+                </div>
+                <div className="badge badge-success badge-sm gap-1">
+                  <span className="icon-[tabler--trending-up] size-3"></span>
+                  +25.6%
                 </div>
               </div>
-              <h5 className="text-lg font-medium">Pageviews</h5>
-            </div>
-            <div>
-              <div className="text-base-content text-xl font-semibold">
-                17,356
-              </div>
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <span className="text-success inline-flex items-center gap-1">
-                  <span className="icon-[tabler--arrow-up] size-4"></span>
-                  25.6%
-                </span>
-                <span className="text-base-content/50 font-medium">
-                  EPC: 308.20
-                </span>
+              <h3 className="text-2xl font-bold text-base-content mb-1">17,356</h3>
+              <p className="text-base-content/70 text-sm mb-3">Total Pageviews</p>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-base-content/50">EPC: $308.20</span>
+                <span className="text-success font-medium">On Track</span>
               </div>
             </div>
           </div>
-          <div className="divider sm:divider-horizontal"></div>
-          <div className="flex flex-1 flex-col gap-4">
-            <div className="text-base-content flex items-center gap-2">
-              <div className="avatar avatar-placeholder">
-                <div className="bg-base-200 rounded-field size-9">
-                  <span className="icon-[tabler--mouse] size-6"></span>
+
+          {/* Click Card */}
+          <div className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <div className="card-body p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                  <span className="icon-[tabler--mouse] size-6 text-green-600 dark:text-green-400"></span>
+                </div>
+                <div className="badge badge-error badge-sm gap-1">
+                  <span className="icon-[tabler--trending-down] size-3"></span>
+                  -25.6%
                 </div>
               </div>
-              <h5 className="text-lg font-medium">Click</h5>
-            </div>
-            <div>
-              <div className="text-base-content text-xl font-semibold">
-                2,784
+              <h3 className="text-2xl font-bold text-base-content mb-1">2,784</h3>
+              <p className="text-base-content/70 text-sm mb-3">Total Clicks</p>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-base-content/50">Value: $77,359</span>
+                <span className="text-error font-medium">Needs Attention</span>
               </div>
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <span className="text-error inline-flex items-center gap-1">
-                  <span className="icon-[tabler--arrow-down] size-4"></span>
-                  25.6%
-                </span>
-                <span className="text-base-content/50 font-medium">
-                  Related Value: 77,359
-                </span>
+            </div>
+          </div>
+
+          {/* Commission Card */}
+          <div className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <div className="card-body p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  <span className="icon-[tabler--chart-bar] size-6 text-purple-600 dark:text-purple-400"></span>
+                </div>
+                <div className="badge badge-success badge-sm gap-1">
+                  <span className="icon-[tabler--trending-up] size-3"></span>
+                  +25.6%
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-base-content mb-1">$1,658</h3>
+              <p className="text-base-content/70 text-sm mb-3">Commission Earned</p>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-base-content/50">Avg: $45.2/day</span>
+                <span className="text-success font-medium">Excellent</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Sales Card */}
+          <div className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <div className="card-body p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                  <span className="icon-[tabler--currency-dollar] size-6 text-amber-600 dark:text-amber-400"></span>
+                </div>
+                <div className="badge badge-success badge-sm gap-1">
+                  <span className="icon-[tabler--trending-up] size-3"></span>
+                  +25.6%
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-base-content mb-1">$8,759</h3>
+              <p className="text-base-content/70 text-sm mb-3">Total Sales</p>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-base-content/50">Rate: 13.85%</span>
+                <span className="text-success font-medium">Growing</span>
               </div>
             </div>
           </div>
         </div>
-        <div className="divider xl:divider-horizontal"></div>
-        <div className="flex flex-1 gap-4 max-sm:flex-col">
-          <div className="flex flex-1 flex-col gap-4">
-            <div className="text-base-content flex items-center gap-2">
-              <div className="avatar avatar-placeholder">
-                <div className="bg-base-200 rounded-field size-9">
-                  <span className="icon-[tabler--chart-bar] size-6"></span>
+
+        {/* Additional Metrics Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Conversion Rate */}
+          <div className="card bg-base-100 shadow">
+            <div className="card-body p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-info/10 rounded-lg">
+                  <span className="icon-[tabler--arrows-exchange] size-5 text-info"></span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-base-content">Conversion Rate</h4>
+                  <p className="text-sm text-base-content/60">Click to Sale Ratio</p>
                 </div>
               </div>
-              <h5 className="text-lg font-medium">Commission</h5>
-            </div>
-            <div>
-              <div className="text-base-content text-xl font-semibold">
-                $1,658
-              </div>
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <span className="text-success inline-flex items-center gap-1">
-                  <span className="icon-[tabler--arrow-up] size-4"></span>
-                  25.6%
-                </span>
-                <span className="text-base-content/50 font-medium">
-                  Related Value: 77,359
-                </span>
+              <div className="flex items-end justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-base-content">16.03%</div>
+                  <div className="text-success text-sm flex items-center gap-1 mt-1">
+                    <span className="icon-[tabler--arrow-up] size-3"></span>
+                    2.4% from last month
+                  </div>
+                </div>
+                <div className="radial-progress text-info" style={{ "--value": 75, "--size": "3rem" }}>
+                  75%
+                </div>
               </div>
             </div>
           </div>
-          <div className="divider sm:divider-horizontal"></div>
-          <div className="flex flex-1 flex-col gap-4">
-            <div className="text-base-content flex items-center gap-2">
-              <div className="avatar avatar-placeholder">
-                <div className="bg-base-200 rounded-field size-9">
-                  <span className="icon-[tabler--currency-dollar] size-6"></span>
+
+          {/* Avg. Session Duration */}
+          <div className="card bg-base-100 shadow">
+            <div className="card-body p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-secondary/10 rounded-lg">
+                  <span className="icon-[tabler--clock] size-5 text-secondary"></span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-base-content">Avg. Session</h4>
+                  <p className="text-sm text-base-content/60">Engagement Time</p>
                 </div>
               </div>
-              <h5 className="text-lg font-medium">Sales</h5>
-            </div>
-            <div>
-              <div className="text-base-content text-xl font-semibold">
-                $8,759
+              <div className="flex items-end justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-base-content">4m 32s</div>
+                  <div className="text-success text-sm flex items-center gap-1 mt-1">
+                    <span className="icon-[tabler--arrow-up] size-3"></span>
+                    48s longer
+                  </div>
+                </div>
+                <div className="text-3xl text-secondary font-bold">↑</div>
               </div>
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <span className="text-success inline-flex items-center gap-1">
-                  <span className="icon-[tabler--arrow-up] size-4"></span>
-                  25.6%
-                </span>
-                <span className="text-base-content/50 font-medium">
-                  Related Value: 13.85
-                </span>
+            </div>
+          </div>
+
+          {/* Top Performing Content */}
+          <div className="card bg-base-100 shadow">
+            <div className="card-body p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <span className="icon-[tabler--star] size-5 text-primary"></span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-base-content">Top Content</h4>
+                  <p className="text-sm text-base-content/60">Most Viewed Course</p>
+                </div>
+              </div>
+              <div>
+                <div className="font-medium text-base-content">Advanced React Patterns</div>
+                <div className="flex items-center justify-between mt-2">
+                  <div className="text-sm text-base-content/60">3,458 views</div>
+                  <div className="badge badge-primary badge-sm">BEST SELLER</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-full max-h-160 w-full overflow-y-auto">
-          <div className="card-body gap-0 space-y-6">
-            <div className="flex w-full items-start gap-6 max-md:flex-col">
-              <div className="grow space-y-6 max-md:w-full">
-                <h2 className="card-title text-xl">Sales Metrics</h2>
-
-                <div className="flex items-center gap-4">
-                  
-                  <div>
-                    <h3 className="text-base-content text-xl font-medium">
-                      Flyonui Company
-                    </h3>
-                    <p className="text-base-content/80">flyonui@company.com</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="border-base-content/20 rounded-box flex gap-4 border px-4 py-3">
-                    <div className="avatar avatar-placeholder">
-                      <div className="bg-warning/20 text-warning rounded-field size-11.5">
-                        <span className="icon-[tabler--trending-up] size-6"></span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-base-content/50 text-sm font-medium">
-                        Sales trend
-                      </span>
-                      <span className="text-base-content text-lg font-semibold">
-                        $ 11,548
-                      </span>
-                    </div>
-                  </div>
-                  <div className="border-base-content/20 rounded-box flex gap-4 border px-4 py-3">
-                    <div className="avatar avatar-placeholder">
-                      <div className="text-success bg-success/20 rounded-field size-11.5">
-                        <span className="icon-[tabler--chart-bar] size-6"></span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-base-content/50 text-sm font-medium">
-                        Total Profit
-                      </span>
-                      <span className="text-base-content text-lg font-semibold">
-                        $1735
-                      </span>
-                    </div>
-                  </div>
-                  <div className="border-base-content/20 rounded-box flex gap-4 border px-4 py-3">
-                    <div className="avatar avatar-placeholder">
-                      <div className="text-primary bg-primary/20 rounded-field size-11.5">
-                        <span className="icon-[tabler--discount-2] size-6"></span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-base-content/50 text-sm font-medium">
-                        Discounts
-                      </span>
-                      <span className="text-base-content text-lg font-semibold">
-                        $ 14,987
-                      </span>
-                    </div>
-                  </div>
-                  <div className="border-base-content/20 rounded-box flex gap-4 border px-4 py-3">
-                    <div className="avatar avatar-placeholder">
-                      <div className="text-accent bg-accent/20 rounded-field size-11.5">
-                        <span className="icon-[tabler--wallet] size-6"></span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-base-content/50 text-sm font-medium">
-                        Refunds
-                      </span>
-                      <span className="text-base-content text-lg font-semibold">
-                        $3248
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-             
-                
-                  <div className="zq390 d50ic w-full w26jd shadow-md">
-                    <div className="l7s0y flex items-center justify-between bglhu">
-                      <h4 className="iqv7o bk5oo">External Links</h4>
-                      <div className="dropdown relative inline-flex">
-                        <button
-                          id="dropdown-days"
-                          type="button"
-                          className="dropdown-toggle btn btn-text text-base-content/50 btn-circle btn-sm"
-                          aria-haspopup="menu"
-                          aria-expanded="false"
-                          aria-label="Dropdown"
-                        >
-                          <span className="icon-[tabler--dots-vertical] girx5"></span>
-                        </button>
-                        <ul
-                          className="dropdown-menu dropdown-open:opacity-100 hidden"
-                          role="menu"
-                          aria-orientation="vertical"
-                          aria-labelledby="dropdown-days"
-                        >
-                          <li>
-                            <a className="dropdown-item" href="#">
-                              Select All
-                            </a>
-                          </li>
-                          <li>
-                            <a className="dropdown-item" href="#">
-                              Refresh
-                            </a>
-                          </li>
-                          <li>
-                            <a className="dropdown-item" href="#">
-                              Share
-                            </a>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                    <div className="nqxya ip6vv">
-                      <div id="externalLinkChart" className="w-full"></div>
-
-                      <div className="nbone">
-                        <div className="flex w-full items-center ip6vv">
-                          <div className="flex sxihv items-center bglhu">
-                            <span className="bg-primary inline-block ue1bl shrink-0 rounded-full"></span>
-                            <span className="font-medium">
-                              Google Analytics
-                            </span>
-                          </div>
-                          <span className="text-base-content/80 text-sm font-medium">
-                            $342k
-                          </span>
-                          <div className="flex items-center rsqkx">
-                            <span className="text-base-content/80 text-sm font-medium">
-                              82%
-                            </span>
-                            <span className="icon-[tabler--chevron-down] text-error girx5"></span>
-                          </div>
-                        </div>
-                        <div className="flex w-full items-center ip6vv">
-                          <div className="flex sxihv items-center bglhu">
-                            <span className="dxw29 inline-block ue1bl shrink-0 rounded-full"></span>
-                            <span className="font-medium">Facebook Ads</span>
-                          </div>
-                          <span className="text-base-content/80 text-sm font-medium">
-                            $12.4k
-                          </span>
-                          <div className="flex items-center rsqkx">
-                            <span className="text-base-content/80 text-sm font-medium">
-                              52%
-                            </span>
-                            <span className="icon-[tabler--chevron-up] text-success girx5"></span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-               
-             
+        {/* Quick Actions */}
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-5">
+            <h3 className="text-lg font-semibold text-base-content mb-4">Quick Actions</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <button className="btn btn-outline btn-sm gap-2">
+                <span className="icon-[tabler--report-analytics] size-4"></span>
+                Generate Report
+              </button>
+              <button className="btn btn-outline btn-sm gap-2">
+                <span className="icon-[tabler--download] size-4"></span>
+                Export Data
+              </button>
+              <button className="btn btn-outline btn-sm gap-2">
+                <span className="icon-[tabler--adjustments] size-4"></span>
+                Filter Results
+              </button>
+              <button className="btn btn-primary btn-sm gap-2">
+                <span className="icon-[tabler--plus] size-4"></span>
+                Create New
+              </button>
             </div>
+          </div>
+        </div>
 
-            <div className="border-base-content/20 rounded-box flex gap-6 border p-6 max-md:flex-col">
-              <div className="space-y-4">
-                <h3 className="card-title">Sales Plan</h3>
-                <div className="text-base-content text-7xl font-medium">
-                  54%
-                </div>
-                <p className="text-base-content/50 text-lg">
-                  Percentage profit from total sales
-                </p>
+        {/* Performance Chart Placeholder */}
+        <div className="mt-8">
+          <div className="card bg-base-100 shadow-lg">
+            <div className="card-body">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-base-content">Performance Trend</h3>
+                <select className="select select-sm select-bordered w-32">
+                  <option>Last 7 days</option>
+                  <option>Last 30 days</option>
+                  <option>Last 90 days</option>
+                </select>
               </div>
-
-              <div className="space-y-6">
-                <h3 className="text-base-content text-xl font-medium">
-                  Cohart analysis indicators
-                </h3>
-                <p className="text-base-content/50">
-                  Analyzes the behaviour of a group of users who joined a
-                  product/service at the same time, over a certain period.
-                </p>
-
-                <div className="text-base-content flex gap-6 max-sm:flex-col sm:items-center">
-                  <div className="flex items-center gap-2">
-                    <span className="icon-[tabler--chart-infographic] size-6"></span>
-                    <span className="text-lg font-medium">Open Statistics</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="icon-[tabler--percentage] size-6"></span>
-                    <span className="text-lg font-medium">
-                      Percentage Change
-                    </span>
-                  </div>
-                </div>
-
-                <div className="progress rounded-field h-7 *:rounded-none">
-                  <div className="progress-bar progress-primary w-full"></div>
-                  <div className="progress-bar bg-primary/50 w-3/4"></div>
-                  <div className="progress-bar bg-primary/30 w-2/4"></div>
-                  <div className="progress-bar bg-primary/10 w-1/4"></div>
+              <div className="h-64 flex items-center justify-center bg-base-200/50 rounded-lg">
+                <div className="text-center">
+                  <span className="icon-[tabler--chart-line] size-12 text-base-content/30 mb-2"></span>
+                  <p className="text-base-content/50">Performance chart visualization would appear here</p>
                 </div>
               </div>
             </div>

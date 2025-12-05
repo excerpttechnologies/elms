@@ -366,7 +366,7 @@ export default function CourseModulesFrontend() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="w-full mx-auto">
       <div className="bg-white rounded-md shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -460,60 +460,104 @@ export default function CourseModulesFrontend() {
       </div>
 
       {/* Modal usage */}
-      <Modal open={isModalOpen} onClose={closeModal} title={editingModuleIndex === null ? "Add New Module" : "Edit Module"} size="md">
-        <div className="space-y-4">
-          {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
+            <Modal open={isModalOpen} onClose={closeModal} 
+             title={editingModuleIndex === null ? "Add New Module" : "Edit Module"} 
+             size="md">
+        <div className="space-y-6">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <span className="icon-[tabler--alert-circle] size-5 inline mr-2"></span>
+              {error}
+            </div>
+          )}
 
           <div>
-            <label className="block text-sm font-medium mb-1">Title <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Title <span className="text-red-500">*</span>
+            </label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Module title"
+              className="input w-full focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              placeholder="Enter module title"
+              autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description
+            </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="textarea w-full focus:ring-2 focus:ring-primary/20 focus:border-primary"
               rows={4}
-              placeholder="Short description (optional)"
+              placeholder="Brief description of what this module covers"
             />
+            <p className="text-xs text-gray-500 mt-2">
+              This helps students understand what they'll learn
+            </p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Order</label>
-              <input
-                type="number"
-                min={0}
-                value={order}
-                onChange={(e) => setOrder(Number(e.target.value))}
-                className="w-28 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+          <div className="flex items-center gap-6">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Order Position
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  min={1}
+                  value={order}
+                  onChange={(e) => setOrder(Number(e.target.value))}
+                  className="input w-full text-center focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <span className="icon-[tabler--sort-ascending] size-5"></span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Lower numbers appear first
+              </p>
             </div>
 
-            <div className="ml-auto flex gap-2">
-              {editingModuleIndex !== null && (
-                <button onClick={() => { setEditingModuleIndex(null); setTitle(""); setDescription(""); setOrder(1); }} className="px-3 py-1 border rounded">
-                  Cancel
-                </button>
-              )}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={closeModal}
+                className="btn btn-text"
+                disabled={saving}
+              >
+                Cancel
+              </button>
               <button
                 onClick={handleSaveModule}
                 disabled={saving || !title.trim()}
-                className="px-3 py-1 bg-black text-white rounded disabled:opacity-60"
+                className="btn btn-primary min-w-[100px]"
               >
-                {saving ? "Saving..." : editingModuleIndex === null ? "Add module" : "Save changes"}
+                {saving ? (
+                  <>
+                    <span className="icon-[tabler--loader] size-5 animate-spin mr-2"></span>
+                    Saving...
+                  </>
+                ) : editingModuleIndex === null ? (
+                  <>
+                    <span className="icon-[tabler--plus] size-5 mr-2"></span>
+                    Add Module
+                  </>
+                ) : (
+                  <>
+                    <span className="icon-[tabler--check] size-5 mr-2"></span>
+                    Save Changes
+                  </>
+                )}
               </button>
             </div>
           </div>
         </div>
       </Modal>
+
+
     </div>
   );
 }
